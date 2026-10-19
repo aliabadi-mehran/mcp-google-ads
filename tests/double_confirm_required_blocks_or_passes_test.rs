@@ -35,7 +35,7 @@ async fn confirmed_twice_false_blocks_apply() {
 
     let plan = make_destructive_plan();
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.require_dry_run = false; // isolate the double-confirm guard
@@ -73,7 +73,7 @@ async fn confirmed_twice_true_lets_apply_proceed() {
 
     let plan = make_destructive_plan();
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.require_dry_run = false;

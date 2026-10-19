@@ -207,7 +207,7 @@ pub fn draft_campaign(params: &DraftCampaignParams) -> Result<serde_json::Value>
     }
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -358,7 +358,7 @@ pub fn update_campaign(params: &UpdateCampaignParams) -> Result<serde_json::Valu
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -468,7 +468,7 @@ pub fn set_campaign_geo_target_type(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

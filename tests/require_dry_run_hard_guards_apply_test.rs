@@ -31,7 +31,7 @@ async fn require_dry_run_true_blocks_apply_with_dryrun_false() {
         vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
     );
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.require_dry_run = true;

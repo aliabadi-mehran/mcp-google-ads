@@ -107,7 +107,7 @@ pub fn pause_entity(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -142,7 +142,7 @@ pub fn enable_entity(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -179,7 +179,7 @@ pub fn remove_entity(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

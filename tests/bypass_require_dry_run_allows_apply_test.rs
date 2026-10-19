@@ -36,7 +36,7 @@ async fn bypass_require_dry_run_lets_apply_proceed() {
         vec![json!({"adGroupOperation": {"create": {"name": "x"}}})],
     );
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.require_dry_run = true; // guard ON

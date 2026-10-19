@@ -64,7 +64,7 @@ async fn unknown_error_code_is_explained_not_parroted() {
         apply_parameters: None,
     });
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.log_file = log_file.clone();

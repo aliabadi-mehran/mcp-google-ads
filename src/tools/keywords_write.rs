@@ -107,7 +107,7 @@ pub fn draft_keywords(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -166,7 +166,7 @@ pub fn update_keyword_final_url(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -235,7 +235,7 @@ pub fn add_negative_keywords(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -286,7 +286,7 @@ pub fn remove_keywords(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -337,7 +337,7 @@ pub fn remove_negative_keywords(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

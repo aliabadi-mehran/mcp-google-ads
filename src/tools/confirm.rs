@@ -372,7 +372,7 @@ mod tests {
         );
 
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let retrieved = get_plan(&plan_id);
         assert!(retrieved.is_some());
@@ -394,7 +394,7 @@ mod tests {
             vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
         );
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let mut config = Config::default();
         config.safety.require_dry_run = true;
@@ -430,7 +430,7 @@ mod tests {
             vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
         );
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let config = Config::default();
         let preview = confirm_and_apply(
@@ -463,7 +463,7 @@ mod tests {
             vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
         );
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let mut config = Config::default();
         config.safety.require_dry_run = false;
@@ -496,7 +496,7 @@ mod tests {
             vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
         );
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let mut config = Config::default();
         config.safety.require_dry_run = false;
@@ -528,7 +528,7 @@ mod tests {
             vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
         );
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let mut config = Config::default();
         config.access.role = crate::config::AccessRole::Editor;
@@ -548,4 +548,3 @@ mod tests {
         remove_plan(&plan_id);
     }
 }
-

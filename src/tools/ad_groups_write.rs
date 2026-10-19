@@ -77,7 +77,7 @@ pub fn create_ad_group(
     }
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -147,7 +147,7 @@ pub fn update_ad_group(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

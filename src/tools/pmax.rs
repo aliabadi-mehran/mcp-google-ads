@@ -331,7 +331,7 @@ pub fn create_pmax_campaign(params: &CreatePmaxCampaignParams) -> Result<serde_j
     }
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

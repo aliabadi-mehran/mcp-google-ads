@@ -123,7 +123,7 @@ pub fn set_campaign_schedule(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
