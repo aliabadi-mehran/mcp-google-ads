@@ -263,6 +263,17 @@ impl GoogleAdsClient {
         id.replace('-', "")
     }
 
+    fn ensure_customer_scope(&self, customer_id: &str) -> Result<()> {
+        if self.config.customer_is_allowed(customer_id) {
+            Ok(())
+        } else {
+            Err(McpGoogleAdsError::AccessDenied(format!(
+                "customer_id '{}' is outside tenant '{}' account scope",
+                customer_id, self.config.access.tenant_id
+            )))
+        }
+    }
+
     /// Build common headers for Google Ads API requests.
     ///
     /// When the base URL points anywhere other than the real Google Ads host
@@ -316,6 +327,7 @@ impl GoogleAdsClient {
     /// Execute a GAQL query via the Google Ads search endpoint.
     /// Handles pagination automatically.
     pub async fn search(&self, customer_id: &str, query: &str) -> Result<Vec<serde_json::Value>> {
+        self.ensure_customer_scope(customer_id)?;
         let normalized_id = Self::normalize_customer_id(customer_id);
         let url = format!(
             "{}/customers/{}/googleAds:search",
@@ -382,6 +394,7 @@ impl GoogleAdsClient {
         seed_keywords: Vec<String>,
         page_size: Option<u32>,
     ) -> Result<Vec<serde_json::Value>> {
+        self.ensure_customer_scope(customer_id)?;
         let normalized_id = Self::normalize_customer_id(customer_id);
         let url = format!(
             "{}/customers/{}:generateKeywordIdeas",
@@ -459,6 +472,7 @@ impl GoogleAdsClient {
         customer_id: &str,
         operations: Vec<MutateOperation>,
     ) -> Result<MutateResponse> {
+        self.ensure_customer_scope(customer_id)?;
         Self::validate_mutate_operations(&operations).map_err(McpGoogleAdsError::Validation)?;
 
         let normalized_id = Self::normalize_customer_id(customer_id);
@@ -508,6 +522,7 @@ impl GoogleAdsClient {
         resource_names: Vec<String>,
         apply_parameters: Option<serde_json::Value>,
     ) -> Result<ApplyRecommendationResponse> {
+        self.ensure_customer_scope(customer_id)?;
         if let Some(ref parameters) = apply_parameters {
             validate_apply_parameters(parameters)?;
         }
@@ -567,6 +582,7 @@ impl GoogleAdsClient {
         customer_id: &str,
         resource_names: Vec<String>,
     ) -> Result<DismissRecommendationResponse> {
+        self.ensure_customer_scope(customer_id)?;
         let normalized_id = Self::normalize_customer_id(customer_id);
         let url = format!(
             "{}/customers/{}/recommendations:dismiss",
@@ -736,4 +752,19 @@ mod tests {
         let client = GoogleAdsClient::with_base_url(&cfg, "http://localhost:9999/v25").unwrap();
         assert_eq!(client.base_url(), "http://localhost:9999/v25");
     }
+
+    #[tokio::test]
+    async fn customer_scope_rejects_before_http() {
+        let mut cfg = Config::default();
+        cfg.access.allowed_customer_ids = vec!["123-456-7890".to_string()];
+        cfg.access.tenant_id = "tenant-a".to_string();
+        let client = GoogleAdsClient::with_base_url(&cfg, "http://127.0.0.1:9/v25").unwrap();
+
+        let error = client
+            .search("999-999-9999", "SELECT campaign.id FROM campaign")
+            .await
+            .expect_err("out-of-scope account must be rejected before HTTP");
+        assert!(matches!(error, McpGoogleAdsError::AccessDenied(_)));
+    }
 }
+

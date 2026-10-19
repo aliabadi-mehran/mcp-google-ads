@@ -4,6 +4,7 @@ pub mod config;
 pub mod error;
 pub mod gaql;
 pub mod models;
+pub mod remote;
 pub mod safety;
 pub mod tools;
 
@@ -2295,10 +2296,12 @@ impl GoogleAdsMcp {
 
     /// Check if write operations are allowed. Returns error JSON if read-only mode is active.
     fn check_write_allowed(&self) -> Option<String> {
-        if self.config.read_only {
+        if self.config.read_only || !self.config.access.role.can_draft() {
             Some(
                 serde_json::json!({
-                    "error": "Write operations are disabled (GOOGLE_ADS_READ_ONLY=true)"
+                    "error": "Write operations are disabled for this principal",
+                    "role": self.config.access.role.as_str(),
+                    "tenant_id": self.config.access.tenant_id,
                 })
                 .to_string(),
             )
@@ -2433,3 +2436,4 @@ mod tests {
         );
     }
 }
+

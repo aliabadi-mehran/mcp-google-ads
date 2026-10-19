@@ -2,6 +2,53 @@ use std::path::PathBuf;
 
 use crate::error::Result;
 
+/// Authorization level attached to a remote MCP principal.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum AccessRole {
+    Analyst,
+    Editor,
+    #[default]
+    Admin,
+}
+
+impl AccessRole {
+    pub fn can_draft(self) -> bool {
+        matches!(self, Self::Editor | Self::Admin)
+    }
+
+    pub fn can_apply(self) -> bool {
+        matches!(self, Self::Admin)
+    }
+
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Analyst => "analyst",
+            Self::Editor => "editor",
+            Self::Admin => "admin",
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct AccessContext {
+    pub tenant_id: String,
+    pub subject: String,
+    pub role: AccessRole,
+    /// Empty only in local stdio mode, where the legacy behavior is preserved.
+    pub allowed_customer_ids: Vec<String>,
+}
+
+impl Default for AccessContext {
+    fn default() -> Self {
+        Self {
+            tenant_id: "local".to_string(),
+            subject: "local-user".to_string(),
+            role: AccessRole::Admin,
+            allowed_customer_ids: Vec::new(),
+        }
+    }
+}
+
 fn expand_tilde(path: &str) -> PathBuf {
     if let Some(rest) = path.strip_prefix("~/") {
         if let Some(home) = dirs::home_dir() {
@@ -98,6 +145,8 @@ pub struct Config {
     pub safety: SafetyConfig,
     /// When true, only READ tools are exposed. All write/mutate tools are hidden.
     pub read_only: bool,
+    /// Server-owned identity and account scope. Remote callers cannot override it.
+    pub access: AccessContext,
 }
 
 impl Config {
@@ -142,7 +191,19 @@ impl Config {
                 blocked_operations: env_list("GOOGLE_ADS_BLOCKED_OPS"),
             },
             read_only: env_bool_or("GOOGLE_ADS_READ_ONLY", false),
+            access: AccessContext::default(),
         })
+    }
+
+    pub fn customer_is_allowed(&self, customer_id: &str) -> bool {
+        if self.access.allowed_customer_ids.is_empty() {
+            return true;
+        }
+        let candidate = customer_id.replace('-', "");
+        self.access
+            .allowed_customer_ids
+            .iter()
+            .any(|allowed| allowed.replace('-', "") == candidate)
     }
 }
 
@@ -325,3 +386,4 @@ mod tests {
         std::env::remove_var("GOOGLE_ADS_LOGIN_CUSTOMER_ID");
     }
 }
+

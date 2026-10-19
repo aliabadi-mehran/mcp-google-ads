@@ -100,6 +100,25 @@ An MCP server that gives Claude full read + write access to Google Ads accounts 
 
 ## Quick Start
 
+### Install on a fresh Ubuntu server
+
+For a team-hosted Remote MCP, point a domain at a fresh Ubuntu 22.04/24.04
+server, upload your Google OAuth JSON files, then run:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/aliabadi-mehran/mcp-google-ads/feat/team-remote-mcp/scripts/install-ubuntu.sh \
+  -o /tmp/install-mcp-google-ads.sh
+sudo bash /tmp/install-mcp-google-ads.sh
+```
+
+The installer asks only for the domain, Let's Encrypt email, Google Ads
+credentials/account, initial Admin identity, and budget ceiling. It installs a
+hardened systemd service and Nginx HTTPS proxy, generates the bearer token, and
+checks the public endpoint. See the [Ubuntu installation guide](docs/ubuntu-quick-install.md)
+and [security/architecture guide](docs/remote-deployment.md).
+
+### Local stdio installation
+
 ### 1. Build
 
 ```bash
@@ -431,3 +450,4 @@ credentials (`GOOGLE_ADS_TEST_*` env vars); the rest of the test files
 ## License
 
 [MIT](LICENSE)
+

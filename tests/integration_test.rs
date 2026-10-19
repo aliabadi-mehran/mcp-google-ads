@@ -64,6 +64,7 @@ fn test_config() -> Config {
             login_customer_id,
         },
         safety: mcp_google_ads::config::SafetyConfig::default(),
+        access: Default::default(),
         read_only: false,
     }
 }
@@ -392,3 +393,4 @@ async fn test_invalid_gaql_returns_error() {
         "Expected error for invalid GAQL field, got success"
     );
 }
+
