@@ -174,7 +174,7 @@ pub fn exclude_geo_target(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -235,7 +235,7 @@ pub fn remove_geo_target(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

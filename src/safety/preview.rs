@@ -6,6 +6,7 @@ use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::error::{McpGoogleAdsError, Result};
 use crate::models::{AdStatus, NextActionHint};
 
 /// Discriminator that tells `confirm_and_apply` how to dispatch this plan.
@@ -158,9 +159,17 @@ const PLAN_TTL: Duration = Duration::from_secs(24 * 60 * 60);
 /// flush another tenant's plans.
 const MAX_PLANS_PER_CUSTOMER: usize = 500;
 
+/// Defense-in-depth bounds for the in-memory plan store. HTTP request limits
+/// are deployment-specific, so the application must enforce its own ceiling.
+const MAX_PLAN_BYTES: usize = 8 * 1024 * 1024;
+const MAX_PLAN_BYTES_PER_CUSTOMER: usize = 64 * 1024 * 1024;
+const MAX_TOTAL_PLANS: usize = 10_000;
+const MAX_TOTAL_PLAN_BYTES: usize = 256 * 1024 * 1024;
+
 struct StoredPlan {
     plan: ChangePlan,
     stored_at: Instant,
+    size_bytes: usize,
 }
 
 static PENDING_PLANS: std::sync::LazyLock<Mutex<HashMap<String, StoredPlan>>> =
@@ -170,22 +179,45 @@ fn normalize_customer(id: &str) -> String {
     id.replace('-', "")
 }
 
-pub fn store_plan(plan: ChangePlan) {
+pub fn store_plan(plan: ChangePlan) -> Result<()> {
+    let size_bytes = serde_json::to_vec(&plan)?.len();
+    if size_bytes > MAX_PLAN_BYTES {
+        return Err(McpGoogleAdsError::Validation(format!(
+            "pending plan is {size_bytes} bytes, over the {MAX_PLAN_BYTES} byte limit"
+        )));
+    }
+
     let mut plans = PENDING_PLANS.lock().expect("plan store lock poisoned");
     plans.retain(|_, stored| stored.stored_at.elapsed() < PLAN_TTL);
 
     let customer = normalize_customer(&plan.customer_id);
-    let mut same_customer: Vec<(Instant, String)> = plans
+    let mut same_customer: Vec<(Instant, String, usize)> = plans
         .iter()
         .filter(|(_, stored)| normalize_customer(&stored.plan.customer_id) == customer)
-        .map(|(id, stored)| (stored.stored_at, id.clone()))
+        .map(|(id, stored)| (stored.stored_at, id.clone(), stored.size_bytes))
         .collect();
-    if same_customer.len() >= MAX_PLANS_PER_CUSTOMER {
-        same_customer.sort();
-        let excess = same_customer.len() + 1 - MAX_PLANS_PER_CUSTOMER;
-        for (_, id) in same_customer.into_iter().take(excess) {
-            plans.remove(&id);
-        }
+    same_customer.sort_by_key(|(stored_at, _, _)| *stored_at);
+    let mut customer_bytes: usize = same_customer.iter().map(|(_, _, size)| size).sum();
+    let mut evict_count = 0;
+    while same_customer.len().saturating_sub(evict_count) >= MAX_PLANS_PER_CUSTOMER
+        || customer_bytes + size_bytes > MAX_PLAN_BYTES_PER_CUSTOMER
+    {
+        let Some((_, _, evicted_size)) = same_customer.get(evict_count) else {
+            break;
+        };
+        customer_bytes = customer_bytes.saturating_sub(*evicted_size);
+        evict_count += 1;
+    }
+    for (_, id, _) in same_customer.into_iter().take(evict_count) {
+        plans.remove(&id);
+    }
+
+    let total_bytes: usize = plans.values().map(|stored| stored.size_bytes).sum();
+    if plans.len() >= MAX_TOTAL_PLANS || total_bytes + size_bytes > MAX_TOTAL_PLAN_BYTES {
+        return Err(McpGoogleAdsError::Safety(
+            "pending plan store capacity reached; apply plans or wait for them to expire"
+                .to_string(),
+        ));
     }
 
     plans.insert(
@@ -193,8 +225,10 @@ pub fn store_plan(plan: ChangePlan) {
         StoredPlan {
             plan,
             stored_at: Instant::now(),
+            size_bytes,
         },
     );
+    Ok(())
 }
 
 pub fn get_plan(plan_id: &str) -> Option<ChangePlan> {
@@ -252,7 +286,7 @@ mod tests {
     fn test_store_and_retrieve_plan() {
         let plan = make_plan();
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         let retrieved = get_plan(&plan_id);
         assert!(retrieved.is_some());
@@ -267,7 +301,7 @@ mod tests {
     fn test_remove_plan() {
         let plan = make_plan();
         let plan_id = plan.plan_id.clone();
-        store_plan(plan);
+        store_plan(plan).unwrap();
 
         remove_plan(&plan_id);
         assert!(get_plan(&plan_id).is_none());
@@ -295,18 +329,21 @@ mod tests {
     fn test_per_customer_cap_evicts_only_that_customers_oldest() {
         let other = plan_for("777-000-0002");
         let other_id = other.plan_id.clone();
-        store_plan(other);
+        store_plan(other).unwrap();
 
         let mut ids = Vec::new();
         for _ in 0..=MAX_PLANS_PER_CUSTOMER {
             let plan = plan_for("777-000-0001");
             ids.push(plan.plan_id.clone());
-            store_plan(plan);
+            store_plan(plan).unwrap();
         }
 
         assert!(get_plan(&ids[0]).is_none(), "oldest plan is evicted");
         assert!(get_plan(&ids[MAX_PLANS_PER_CUSTOMER]).is_some());
-        assert!(get_plan(&other_id).is_some(), "other customers are untouched");
+        assert!(
+            get_plan(&other_id).is_some(),
+            "other customers are untouched"
+        );
 
         for id in ids {
             remove_plan(&id);
@@ -317,6 +354,15 @@ mod tests {
     #[test]
     fn test_get_nonexistent_plan() {
         assert!(get_plan("does-not-exist-xyz").is_none());
+    }
+
+    #[test]
+    fn test_oversized_plan_is_rejected() {
+        let mut plan = make_plan();
+        plan.changes = serde_json::json!({"payload": "x".repeat(MAX_PLAN_BYTES + 1)});
+
+        let error = store_plan(plan).unwrap_err();
+        assert!(matches!(error, McpGoogleAdsError::Validation(_)));
     }
 
     #[test]

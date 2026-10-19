@@ -73,7 +73,7 @@ pub fn add_audience_targeting(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -175,7 +175,7 @@ pub fn add_asset_group_signal(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

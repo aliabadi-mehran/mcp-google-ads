@@ -16,9 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plan is now reported as not found.
 - Plan ids are full UUIDs instead of 8 hex characters, so they cannot be
   enumerated.
-- Pending plans expire after 24 hours, and each customer is capped at 500
-  pending plans (the oldest is evicted; other customers are unaffected).
-- Real OAuth and developer tokens are no longer sent when
+- Write tools reject customer IDs outside the caller's account scope before
+  storing a draft. Pending plans expire after 24 hours, each customer is
+  capped at 500 plans and 64 MiB, individual plans at 8 MiB, and the process
+  store at 10,000 plans or 256 MiB.
+- Real OAuth, developer tokens, and login-customer IDs are no longer sent when
   `GOOGLE_ADS_API_BASE_URL` points away from Google, unless
   `GOOGLE_ADS_ALLOW_CUSTOM_BASE_URL=true` is set. Look-alike hosts such as
   `https://googleads.googleapis.com.example` are no longer treated as Google.

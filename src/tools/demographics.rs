@@ -199,7 +199,7 @@ pub fn exclude_demographics(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -271,7 +271,7 @@ pub fn remove_demographic_criterion(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

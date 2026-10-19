@@ -52,7 +52,7 @@ async fn partial_failure_error_is_reported_as_failure_and_plan_retained() {
         })],
     );
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     config.safety.log_file = log_file.clone();

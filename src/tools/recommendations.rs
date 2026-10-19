@@ -77,7 +77,7 @@ pub fn apply_recommendation(
     });
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -119,7 +119,7 @@ pub fn dismiss_recommendation(
     });
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

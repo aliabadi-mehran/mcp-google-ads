@@ -71,11 +71,17 @@ until the process restarted. A careless or hostile principal with draft
 rights could keep creating plans and grow memory without limit.
 
 **Fix.**
+- Write tools validate the requested customer against the principal's account
+  scope before a plan is created or stored. A caller cannot bypass the
+  per-customer cap by inventing customer IDs.
 - Pending plans expire 24 hours after they are created.
 - Each Google Ads customer can have at most 500 pending plans. Past that,
   the oldest plan *for the same customer* is dropped. Because a customer
   belongs to only one tenant, one tenant cannot push out another tenant's
   plans.
+- Each plan is limited to 8 MiB and each customer to 64 MiB. A final process
+  ceiling of 10,000 plans or 256 MiB rejects new plans instead of allowing an
+  out-of-memory failure.
 
 Code: `src/safety/preview.rs`.
 
@@ -85,8 +91,9 @@ Code: `src/safety/preview.rs`.
 
 **Problem.** The `GOOGLE_ADS_API_BASE_URL` environment variable exists so
 tests can point the client at a mock server. If it was set to any other
-address while a credentials file was present, the server sent the real
-Google OAuth access token and developer token to that address.
+address, the server could send Google authentication or account headers to
+that address. A missing credentials file selected a dummy OAuth token but
+still exposed a configured developer token and login-customer ID.
 
 In addition, the check that decides whether an address is Google's
 accepted anything *starting with* `https://googleads.googleapis.com`, so
@@ -97,10 +104,13 @@ Only someone who controls the server's environment can set this variable,
 so exploiting it requires a misconfiguration or another foothold.
 
 **Fix.**
-- When the API address is not Google's and a credentials file exists, the
-  server refuses the request instead of sending credentials. Operators who
-  really do need a custom endpoint must opt in with
+- When the API address is not Google's, the server refuses to send any real
+  OAuth token, developer token, or login-customer ID. Operators who really do
+  need a custom endpoint must opt in with
   `GOOGLE_ADS_ALLOW_CUSTOM_BASE_URL=true`.
+- Mock servers remain usable without that opt-in only when the credential file
+  is absent, the developer token is empty or the documented test value, and no
+  login-customer ID is configured.
 - An address only counts as Google's if `https://googleads.googleapis.com`
   is followed by `/` or nothing else.
 

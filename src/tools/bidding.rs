@@ -114,7 +114,7 @@ pub fn create_portfolio_bidding_strategy(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -175,7 +175,7 @@ pub fn update_keyword_bid(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

@@ -181,7 +181,7 @@ pub fn create_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -229,7 +229,7 @@ pub fn add_to_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -287,7 +287,7 @@ pub fn remove_from_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -343,7 +343,7 @@ pub fn attach_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -403,7 +403,7 @@ pub fn detach_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -444,7 +444,7 @@ pub fn delete_negative_keyword_list(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

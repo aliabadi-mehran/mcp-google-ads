@@ -1016,7 +1016,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreateAdGroupToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1041,7 +1041,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UpdateAdGroupToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1068,7 +1068,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<DraftCampaignToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1108,7 +1108,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UpdateCampaignToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1162,7 +1162,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<DraftRsaToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1191,7 +1191,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UpdateRsaToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1219,7 +1219,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<DraftKeywordsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1248,7 +1248,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<AddNegativeKeywordsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1276,7 +1276,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreateNegativeKeywordListParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1303,7 +1303,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<AddToNegativeKeywordListParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1329,7 +1329,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveFromNegativeKeywordListParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1353,7 +1353,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<NegativeKeywordListCampaignsParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1377,7 +1377,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<NegativeKeywordListCampaignsParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1401,7 +1401,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<NegativeKeywordListParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1424,7 +1424,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<ExcludeGeoTargetToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1448,7 +1448,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveGeoTargetToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1472,7 +1472,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<SetCampaignGeoTargetTypeToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1499,7 +1499,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<ExcludeDemographicsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1525,7 +1525,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveDemographicCriterionToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1562,7 +1562,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<DraftSitelinksToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1584,7 +1584,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreateCalloutsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1608,7 +1608,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreateSnippetsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1633,7 +1633,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveExtensionToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1658,7 +1658,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveKeywordsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1682,7 +1682,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RemoveNegativeKeywordsToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1701,7 +1701,7 @@ impl GoogleAdsMcp {
 
     #[tool(description = "Draft pausing a campaign, ad group, ad, or keyword.")]
     async fn pause_entity(&self, Parameters(params): Parameters<EntityActionParams>) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1723,7 +1723,7 @@ impl GoogleAdsMcp {
 
     #[tool(description = "Draft enabling a paused campaign, ad group, ad, or keyword.")]
     async fn enable_entity(&self, Parameters(params): Parameters<EntityActionParams>) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1747,7 +1747,7 @@ impl GoogleAdsMcp {
         description = "Draft REMOVING an entity (IRREVERSIBLE). Use pause_entity instead if temporary."
     )]
     async fn remove_entity(&self, Parameters(params): Parameters<EntityActionParams>) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1776,7 +1776,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreatePmaxCampaignToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1811,7 +1811,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<AddAudienceTargetingToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1838,7 +1838,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreatePortfolioBiddingToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1864,7 +1864,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UpdateKeywordBidToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1890,7 +1890,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UpdateKeywordFinalUrlToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1915,7 +1915,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UploadImageAssetToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1937,7 +1937,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<UploadTextAssetToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1962,7 +1962,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<LinkAssetToAssetGroupToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -1989,7 +1989,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<AddAssetGroupSignalToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2016,7 +2016,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<SetCampaignScheduleToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2089,7 +2089,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<CreateConversionActionToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2120,7 +2120,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<SetConversionActionPrimaryToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2158,7 +2158,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<ApplyRecommendationToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2182,7 +2182,7 @@ impl GoogleAdsMcp {
         &self,
         Parameters(params): Parameters<RecommendationActionToolParams>,
     ) -> String {
-        if let Some(err) = self.check_write_allowed() {
+        if let Some(err) = self.check_write_allowed_for_customer(params.customer_id.as_deref()) {
             return err;
         }
         let cid = self.resolve_customer_id(params.customer_id.as_deref());
@@ -2307,6 +2307,29 @@ impl GoogleAdsMcp {
             )
         } else {
             None
+        }
+    }
+
+    /// Reject out-of-scope writes before a draft is stored. The API client
+    /// also checks scope when applying a plan, but waiting until then lets an
+    /// editor fill the pending-plan store with arbitrary customer IDs.
+    fn check_write_allowed_for_customer(&self, customer_id: Option<&str>) -> Option<String> {
+        if let Some(error) = self.check_write_allowed() {
+            return Some(error);
+        }
+
+        let customer_id = self.resolve_customer_id(customer_id);
+        if self.config.customer_is_allowed(&customer_id) {
+            None
+        } else {
+            Some(
+                crate::error::McpGoogleAdsError::AccessDenied(format!(
+                    "customer_id '{}' is outside tenant '{}' account scope",
+                    customer_id, self.config.access.tenant_id
+                ))
+                .to_json()
+                .to_string(),
+            )
         }
     }
 
@@ -2435,5 +2458,19 @@ mod tests {
             tools.len()
         );
     }
-}
 
+    #[test]
+    fn test_write_scope_is_checked_before_drafting() {
+        let mut config = Config::default();
+        config.access.allowed_customer_ids = vec!["1234567890".to_string()];
+        let server = GoogleAdsMcp::new(config).unwrap();
+
+        assert!(server
+            .check_write_allowed_for_customer(Some("123-456-7890"))
+            .is_none());
+        let error = server
+            .check_write_allowed_for_customer(Some("999-999-9999"))
+            .unwrap();
+        assert!(error.contains("outside tenant"));
+    }
+}

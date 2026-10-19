@@ -133,7 +133,7 @@ pub fn create_conversion_action(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -206,7 +206,7 @@ pub fn set_conversion_action_primary_status(
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 

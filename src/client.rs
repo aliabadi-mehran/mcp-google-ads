@@ -36,6 +36,15 @@ fn allow_credentials_on_custom_base_url() -> bool {
         .unwrap_or(false)
 }
 
+/// Custom endpoints may be used without an explicit opt-in only by tests
+/// that have no credential file and would send no account-specific headers.
+fn uses_only_dummy_test_headers(config: &Config) -> bool {
+    !config.google.credentials_path.exists()
+        && (config.ads.developer_token.is_empty()
+            || config.ads.developer_token == "test-developer-token")
+        && config.ads.login_customer_id.is_none()
+}
+
 /// Whitelist of top-level `MutateOperation` keys accepted by Google Ads v25.
 ///
 /// `mutate_operations` payloads with any key not in this list are rejected
@@ -295,22 +304,27 @@ impl GoogleAdsClient {
     /// Build common headers for Google Ads API requests.
     ///
     /// When the base URL points anywhere other than the real Google Ads host
-    /// (e.g. a `wiremock` server) and no credentials file exists, this falls
-    /// back to a static dummy bearer token so tests don't need an OAuth2 flow.
+    /// (e.g. a `wiremock` server), it is accepted without an explicit opt-in
+    /// only when every outgoing authentication/account header is a dummy.
     async fn build_headers(&self) -> Result<reqwest::header::HeaderMap> {
+        if self.is_test_base_url()
+            && !allow_credentials_on_custom_base_url()
+            && !uses_only_dummy_test_headers(&self.config)
+        {
+            return Err(McpGoogleAdsError::Config(format!(
+                "refusing to send Google Ads credentials or account headers to non-Google base URL '{}'; \
+                 set {}=true if this endpoint is trusted",
+                self.base_url, ALLOW_CUSTOM_BASE_URL_ENV
+            )));
+        }
+
         let token = if self.is_test_base_url() {
             if !self.config.google.credentials_path.exists() {
                 "test-access-token".to_string()
             } else if allow_credentials_on_custom_base_url() {
                 auth::get_access_token(&self.config).await?
             } else {
-                // Never hand a real OAuth token (and developer token) to a
-                // host that is not Google's unless the operator opted in.
-                return Err(McpGoogleAdsError::Config(format!(
-                    "refusing to send Google credentials to non-Google base URL '{}'; \
-                     set {}=true if this endpoint is trusted",
-                    self.base_url, ALLOW_CUSTOM_BASE_URL_ENV
-                )));
+                unreachable!("custom endpoint credential policy checked above");
             }
         } else {
             auth::get_access_token(&self.config).await?
@@ -707,6 +721,23 @@ mod tests {
     }
 
     #[test]
+    fn test_custom_endpoint_dummy_header_policy_rejects_real_account_headers() {
+        let mut config = Config::default();
+        config.google.credentials_path =
+            std::path::PathBuf::from("/path-that-must-not-exist/mcp-google-ads-credentials.json");
+
+        config.ads.developer_token = "real-developer-token".to_string();
+        assert!(!uses_only_dummy_test_headers(&config));
+
+        config.ads.developer_token.clear();
+        config.ads.login_customer_id = Some("1234567890".to_string());
+        assert!(!uses_only_dummy_test_headers(&config));
+
+        config.ads.login_customer_id = None;
+        assert!(uses_only_dummy_test_headers(&config));
+    }
+
+    #[test]
     fn test_normalize_customer_id() {
         assert_eq!(
             GoogleAdsClient::normalize_customer_id("123-456-7890"),
@@ -808,4 +839,3 @@ mod tests {
         assert!(matches!(error, McpGoogleAdsError::AccessDenied(_)));
     }
 }
-

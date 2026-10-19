@@ -34,7 +34,7 @@ async fn successful_apply_has_no_warnings_field() {
         vec![json!({"adGroupOperation": {"create": {"name": "x"}}})],
     );
     let plan_id = plan.plan_id.clone();
-    store_plan(plan);
+    store_plan(plan).unwrap();
 
     let mut config = common::test_config();
     // require_dry_run=true with bypass=true — this is the SCENARIO that v0.2.x

@@ -165,7 +165,7 @@ pub fn draft_responsive_search_ad(params: &DraftRsaParams) -> Result<serde_json:
     }
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
@@ -322,7 +322,7 @@ pub fn update_responsive_search_ad(params: &UpdateRsaParams) -> Result<serde_jso
     );
 
     let preview = plan.to_preview();
-    store_plan(plan);
+    store_plan(plan)?;
     Ok(preview)
 }
 
