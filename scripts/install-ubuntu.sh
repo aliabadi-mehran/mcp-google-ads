@@ -5,7 +5,7 @@ set -Eeuo pipefail
 umask 027
 
 REPO_URL="${MCP_GOOGLE_ADS_REPO_URL:-https://github.com/aliabadi-mehran/mcp-google-ads.git}"
-REPO_REF="${MCP_GOOGLE_ADS_REPO_REF:-feat/team-remote-mcp}"
+REPO_REF="${MCP_GOOGLE_ADS_REPO_REF:-main}"
 APP_USER="mcp-google-ads"
 INSTALL_ROOT="/opt/mcp-google-ads"
 CONFIG_ROOT="/etc/mcp-google-ads"

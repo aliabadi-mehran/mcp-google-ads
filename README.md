@@ -106,7 +106,7 @@ For a team-hosted Remote MCP, point a domain at a fresh Ubuntu 22.04/24.04
 server, upload your Google OAuth JSON files, then run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aliabadi-mehran/mcp-google-ads/feat/team-remote-mcp/scripts/install-ubuntu.sh \
+curl -fsSL https://raw.githubusercontent.com/aliabadi-mehran/mcp-google-ads/main/scripts/install-ubuntu.sh \
   -o /tmp/install-mcp-google-ads.sh
 sudo bash /tmp/install-mcp-google-ads.sh
 ```

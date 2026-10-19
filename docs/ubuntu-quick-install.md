@@ -31,7 +31,7 @@ scp credentials.json token.json root@SERVER_IP:/root/
 SSH to the server and run:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/aliabadi-mehran/mcp-google-ads/feat/team-remote-mcp/scripts/install-ubuntu.sh \
+curl -fsSL https://raw.githubusercontent.com/aliabadi-mehran/mcp-google-ads/main/scripts/install-ubuntu.sh \
   -o /tmp/install-mcp-google-ads.sh
 sudo bash /tmp/install-mcp-google-ads.sh
 ```
