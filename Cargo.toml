@@ -13,7 +13,7 @@ categories = ["command-line-utilities", "web-programming"]
 exclude = ["dogfood-output/", "scripts/", "assets/", ".claude/", ".envrc"]
 
 [dependencies]
-rmcp = { version = "=3.1.4", features = ["server", "transport-io", "macros"] }
+rmcp = { version = "=3.1.4", features = ["server", "transport-io", "transport-streamable-http-server", "macros"] }
 # Pinned to the exact `rmcp` version: `rmcp` requires `rmcp-macros` with a caret
 # range, and the two are released in lockstep, so Cargo is otherwise free to pair a
 # runtime with a macro crate that expands to functions the runtime does not have.
@@ -30,8 +30,11 @@ chrono = { version = "0.4", features = ["serde"] }
 thiserror = "2"
 uuid = { version = "1", features = ["v4"] }
 dirs = "6"
+axum = "0.8"
+sha2 = "0.10"
 
 [dev-dependencies]
 wiremock = "0.6"
 tokio-test = "0.4"
 proptest = "1"
+

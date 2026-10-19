@@ -94,6 +94,24 @@ pub async fn confirm_and_apply(
         return Err(McpGoogleAdsError::DoubleConfirmRequired);
     }
 
+    // Remote approval boundary: editors can prepare and dry-run plans, but a
+    // server-authenticated admin principal must authorize any real mutation.
+    if !config.access.role.can_apply() {
+        return Err(McpGoogleAdsError::AccessDenied(format!(
+            "role '{}' may draft and dry-run plans but only an admin may apply them",
+            config.access.role.as_str()
+        )));
+    }
+
+    // Re-check scope at apply time. A short plan id is never an authorization
+    // capability and cannot be used to cross tenant/account boundaries.
+    if !config.customer_is_allowed(&plan.customer_id) {
+        return Err(McpGoogleAdsError::AccessDenied(format!(
+            "plan customer_id '{}' is outside tenant '{}' account scope",
+            plan.customer_id, config.access.tenant_id
+        )));
+    }
+
     let client = GoogleAdsClient::new(config)?;
     apply_plan(&client, config, &plan, &plan_id, exempt_policy_violations).await
 }
@@ -133,6 +151,9 @@ async fn apply_plan(
                 dry_run: false,
                 result: "SUCCESS",
                 error: "",
+                tenant_id: &config.access.tenant_id,
+                actor: &config.access.subject,
+                role: config.access.role.as_str(),
             });
 
             if let Some(obj) = result.as_object_mut() {
@@ -166,6 +187,9 @@ async fn apply_plan(
                 dry_run: false,
                 result: "FAILED",
                 error: &e.to_string(),
+                tenant_id: &config.access.tenant_id,
+                actor: &config.access.subject,
+                role: config.access.role.as_str(),
             });
             // Keep the plan in the store so the user can retry.
             Err(e)
@@ -425,4 +449,70 @@ mod tests {
         assert!(get_plan(&plan_id).is_some());
         remove_plan(&plan_id);
     }
+
+    #[tokio::test]
+    async fn editor_cannot_apply_a_real_plan() {
+        let plan = ChangePlan::new(
+            "test_op".to_string(),
+            "campaign".to_string(),
+            "1".to_string(),
+            "1234567890".to_string(),
+            serde_json::json!({}),
+            false,
+            vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
+        );
+        let plan_id = plan.plan_id.clone();
+        store_plan(plan);
+
+        let mut config = Config::default();
+        config.safety.require_dry_run = false;
+        config.access.role = crate::config::AccessRole::Editor;
+        config.access.allowed_customer_ids = vec!["1234567890".to_string()];
+        let error = confirm_and_apply(
+            &config,
+            ConfirmApplyInput {
+                plan_id: plan_id.clone(),
+                dry_run: false,
+                ..Default::default()
+            },
+        )
+        .await
+        .expect_err("editor must not apply");
+        assert!(matches!(error, McpGoogleAdsError::AccessDenied(_)));
+        assert!(get_plan(&plan_id).is_some());
+        remove_plan(&plan_id);
+    }
+
+    #[tokio::test]
+    async fn admin_cannot_apply_an_out_of_scope_plan() {
+        let plan = ChangePlan::new(
+            "test_op".to_string(),
+            "campaign".to_string(),
+            "1".to_string(),
+            "9999999999".to_string(),
+            serde_json::json!({}),
+            false,
+            vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
+        );
+        let plan_id = plan.plan_id.clone();
+        store_plan(plan);
+
+        let mut config = Config::default();
+        config.safety.require_dry_run = false;
+        config.access.allowed_customer_ids = vec!["1234567890".to_string()];
+        let error = confirm_and_apply(
+            &config,
+            ConfirmApplyInput {
+                plan_id: plan_id.clone(),
+                dry_run: false,
+                ..Default::default()
+            },
+        )
+        .await
+        .expect_err("out-of-scope plan must not apply");
+        assert!(matches!(error, McpGoogleAdsError::AccessDenied(_)));
+        assert!(get_plan(&plan_id).is_some());
+        remove_plan(&plan_id);
+    }
 }
+

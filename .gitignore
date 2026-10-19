@@ -4,3 +4,7 @@ credentials.json
 .envrc
 .claude
 dogfood-output/
+remote.json
+secrets/
+audit/
+

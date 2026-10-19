@@ -100,6 +100,13 @@ An MCP server that gives Claude full read + write access to Google Ads accounts 
 
 ## Quick Start
 
+### Team Remote MCP
+
+The server can expose MCP Streamable HTTP for a team behind an HTTPS reverse
+proxy, with per-user bearer authentication, Analyst/Editor/Admin RBAC,
+tenant/account scoping, Admin-only applies, actor-attributed audit logs, and
+per-tenant budget caps. See [Team Remote MCP deployment](docs/remote-deployment.md).
+
 ### 1. Build
 
 ```bash
@@ -431,3 +438,4 @@ credentials (`GOOGLE_ADS_TEST_*` env vars); the rest of the test files
 ## License
 
 [MIT](LICENSE)
+

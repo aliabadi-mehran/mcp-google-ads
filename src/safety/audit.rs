@@ -28,6 +28,9 @@ pub struct MutationLogEntry<'a> {
     pub dry_run: bool,
     pub result: &'a str,
     pub error: &'a str,
+    pub tenant_id: &'a str,
+    pub actor: &'a str,
+    pub role: &'a str,
 }
 
 /// Append a mutation record to the audit log file
@@ -47,6 +50,9 @@ pub fn log_mutation(entry: &MutationLogEntry) -> Result<()> {
         "dry_run": entry.dry_run,
         "result": entry.result,
         "error": entry.error,
+        "tenant_id": entry.tenant_id,
+        "actor": entry.actor,
+        "role": entry.role,
     });
 
     let mut file = OpenOptions::new().create(true).append(true).open(&path)?;
@@ -81,6 +87,9 @@ mod tests {
             dry_run: false,
             result: "SUCCESS",
             error: "",
+            tenant_id: "test-tenant",
+            actor: "tester",
+            role: "admin",
         };
 
         let result = log_mutation(&entry);
@@ -106,6 +115,9 @@ mod tests {
             dry_run: false,
             result: "SUCCESS",
             error: "",
+            tenant_id: "test-tenant",
+            actor: "tester",
+            role: "admin",
         };
         log_mutation(&entry1).ok();
 
@@ -119,6 +131,9 @@ mod tests {
             dry_run: false,
             result: "SUCCESS",
             error: "",
+            tenant_id: "test-tenant",
+            actor: "tester",
+            role: "admin",
         };
         log_mutation(&entry2).ok();
 
@@ -145,6 +160,9 @@ mod tests {
             dry_run: false,
             result: "SUCCESS",
             error: "",
+            tenant_id: "test-tenant",
+            actor: "tester",
+            role: "admin",
         };
         log_mutation(&entry).ok();
 
@@ -163,3 +181,4 @@ mod tests {
         fs::remove_file(&path).ok();
     }
 }
+

@@ -16,6 +16,17 @@ async fn main() -> Result<()> {
     tracing::info!("Starting MCP Google Ads server");
 
     let config = Config::load()?;
+    let transport_mode = std::env::var("MCP_TRANSPORT").unwrap_or_else(|_| "stdio".to_string());
+    if transport_mode.eq_ignore_ascii_case("http") || transport_mode.eq_ignore_ascii_case("remote")
+    {
+        return mcp_google_ads::remote::serve(config).await;
+    }
+    if !transport_mode.eq_ignore_ascii_case("stdio") {
+        return Err(mcp_google_ads::error::McpGoogleAdsError::Config(format!(
+            "unsupported MCP_TRANSPORT '{}'; expected 'stdio' or 'http'",
+            transport_mode
+        )));
+    }
     let server = mcp_google_ads::GoogleAdsMcp::new(config)?;
 
     let transport = rmcp::transport::io::stdio();
@@ -33,3 +44,4 @@ async fn main() -> Result<()> {
 
     Ok(())
 }
+

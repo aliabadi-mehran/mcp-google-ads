@@ -31,6 +31,7 @@ pub fn test_config() -> Config {
             log_file: PathBuf::from("/tmp/__test_audit__.log"),
             blocked_operations: Vec::new(),
         },
+        access: Default::default(),
         read_only: false,
     }
 }
@@ -46,3 +47,4 @@ pub async fn spawn_mock_google_ads() -> (MockServer, GoogleAdsClient) {
     let client = GoogleAdsClient::with_base_url(&config, base_url).unwrap();
     (mock, client)
 }
+

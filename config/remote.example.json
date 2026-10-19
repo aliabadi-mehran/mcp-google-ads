@@ -1,0 +1,41 @@
+{
+  "listen": "127.0.0.1:8080",
+  "public_base_url": "https://mcp.example.com",
+  "allowed_hosts": ["mcp.example.com"],
+  "allowed_origins": [],
+  "principals": [
+    {
+      "id": "analyst-1",
+      "tenant_id": "example-team",
+      "subject": "analyst@example.com",
+      "role": "analyst",
+      "bearer_token_env": "MCP_TOKEN_ANALYST_1",
+      "customer_ids": ["123-456-7890"],
+      "default_customer_id": "123-456-7890",
+      "login_customer_id": null,
+      "credentials_path": "/run/secrets/google-credentials.json",
+      "token_path": "/run/secrets/google-token.json",
+      "developer_token_env": "GOOGLE_ADS_DEVELOPER_TOKEN_EXAMPLE_TEAM",
+      "audit_log": "/var/log/mcp-google-ads/example-team.jsonl",
+      "max_daily_budget": 50.0,
+      "blocked_operations": ["remove_entity", "delete_negative_keyword_list"]
+    },
+    {
+      "id": "editor-1",
+      "tenant_id": "example-team",
+      "subject": "editor@example.com",
+      "role": "editor",
+      "token_sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "customer_ids": ["123-456-7890"],
+      "default_customer_id": "123-456-7890",
+      "login_customer_id": null,
+      "credentials_path": "/run/secrets/google-credentials.json",
+      "token_path": "/run/secrets/google-token.json",
+      "developer_token_env": "GOOGLE_ADS_DEVELOPER_TOKEN_EXAMPLE_TEAM",
+      "audit_log": "/var/log/mcp-google-ads/example-team.jsonl",
+      "max_daily_budget": 50.0,
+      "blocked_operations": []
+    }
+  ]
+}
+

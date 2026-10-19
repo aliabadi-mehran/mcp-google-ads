@@ -14,6 +14,8 @@ pub enum McpGoogleAdsError {
     },
     #[error("Safety violation: {0}")]
     Safety(String),
+    #[error("Access denied: {0}")]
+    AccessDenied(String),
     /// A mutate was rejected by Google's ad policy. Carries the parsed
     /// violations so the caller can see which text tripped which policy and
     /// whether an exemption can be requested.
@@ -238,3 +240,4 @@ mod tests {
         assert_eq!(payload["error"], "Validation error: no changes specified");
     }
 }
+
