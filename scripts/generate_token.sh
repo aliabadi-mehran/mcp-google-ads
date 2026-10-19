@@ -79,7 +79,12 @@ PORT=8085
 REDIRECT_URI="http://localhost:${PORT}"
 SCOPE="https://www.googleapis.com/auth/adwords"
 
-AUTH_URL="https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&response_type=code&access_type=offline&prompt=consent"
+# Anti-CSRF: a random state value that the callback must echo back, so a
+# request forged by another local page or process cannot inject its own code.
+OAUTH_STATE=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
+export OAUTH_STATE
+
+AUTH_URL="https://accounts.google.com/o/oauth2/v2/auth?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&scope=${SCOPE}&response_type=code&access_type=offline&prompt=consent&state=${OAUTH_STATE}"
 
 echo "=== Google Ads OAuth2 Token Generator ==="
 echo ""
@@ -101,44 +106,59 @@ echo ""
 
 # Start a minimal HTTP server to capture the auth code
 AUTH_CODE=$(python3 -c "
+import html
 import http.server
-import urllib.parse
+import os
 import sys
+import time
+import urllib.parse
+
+EXPECTED_STATE = os.environ['OAUTH_STATE']
+result = {}
 
 class Handler(http.server.BaseHTTPRequestHandler):
+    def reply(self, status, body):
+        self.send_response(status)
+        self.send_header('Content-Type', 'text/html; charset=utf-8')
+        self.end_headers()
+        self.wfile.write(body.encode())
+
     def do_GET(self):
-        query = urllib.parse.urlparse(self.path).query
-        params = urllib.parse.parse_qs(query)
+        params = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+
+        # Ignore anything that does not carry our state (favicon requests,
+        # forged callbacks) and keep waiting for the real redirect.
+        if params.get('state', [''])[0] != EXPECTED_STATE:
+            self.reply(400, '<h1>Invalid or missing state parameter</h1>')
+            return
 
         if 'error' in params:
-            self.send_response(400)
-            self.send_header('Content-Type', 'text/html')
-            self.end_headers()
             error = params['error'][0]
             desc = params.get('error_description', [''])[0]
-            self.wfile.write(f'<h1>Authorization failed</h1><p>{error}: {desc}</p>'.encode())
-            print(f'ERROR:{error}:{desc}', file=sys.stderr)
-            raise SystemExit(1)
+            self.reply(400, f'<h1>Authorization failed</h1><p>{html.escape(error)}: {html.escape(desc)}</p>')
+            result['error'] = f'{error}:{desc}'
+            return
 
         code = params.get('code', [''])[0]
         if code:
-            self.send_response(200)
-            self.send_header('Content-Type', 'text/html')
-            self.end_headers()
-            self.wfile.write(b'<h1>Authorization successful!</h1><p>You can close this tab and return to the terminal.</p>')
-            print(code)
+            self.reply(200, '<h1>Authorization successful!</h1><p>You can close this tab and return to the terminal.</p>')
+            result['code'] = code
         else:
-            self.send_response(400)
-            self.send_header('Content-Type', 'text/html')
-            self.end_headers()
-            self.wfile.write(b'<h1>No authorization code received</h1>')
+            self.reply(400, '<h1>No authorization code received</h1>')
 
     def log_message(self, format, *args):
         pass  # Suppress HTTP logs
 
 server = http.server.HTTPServer(('127.0.0.1', ${PORT}), Handler)
-server.timeout = 120  # 2 minute timeout
-server.handle_request()
+deadline = time.monotonic() + 120  # 2 minute timeout
+while not result and time.monotonic() < deadline:
+    server.timeout = max(0.1, deadline - time.monotonic())
+    server.handle_request()
+
+if 'error' in result:
+    print('ERROR:' + result['error'], file=sys.stderr)
+    raise SystemExit(1)
+print(result.get('code', ''))
 ")
 
 if [ -z "$AUTH_CODE" ]; then

@@ -5,6 +5,26 @@ All notable changes to `mcp-google-ads` are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Security
+
+- `confirm_and_apply` checks the plan's customer against the caller's account
+  scope before returning anything, dry run included. The plan store is shared
+  by every remote principal, so a dry run used to show another tenant's
+  pending plan to anyone holding (or guessing) its `plan_id`. An out-of-scope
+  plan is now reported as not found.
+- Plan ids are full UUIDs instead of 8 hex characters, so they cannot be
+  enumerated.
+- Pending plans expire after 24 hours, and each customer is capped at 500
+  pending plans (the oldest is evicted; other customers are unaffected).
+- Real OAuth and developer tokens are no longer sent when
+  `GOOGLE_ADS_API_BASE_URL` points away from Google, unless
+  `GOOGLE_ADS_ALLOW_CUSTOM_BASE_URL=true` is set. Look-alike hosts such as
+  `https://googleads.googleapis.com.example` are no longer treated as Google.
+- `scripts/generate_token.sh` sends and verifies an OAuth `state` value, and
+  HTML-escapes error text echoed by its local callback page.
+
 ## [0.13.0] - 2026-08-24
 
 ### Added

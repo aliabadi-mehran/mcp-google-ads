@@ -60,12 +60,22 @@ pub async fn confirm_and_apply(
         exempt_policy_violations,
     } = input;
 
-    let plan = get_plan(&plan_id).ok_or_else(|| {
+    let not_found = || {
         McpGoogleAdsError::PlanNotFound(format!(
             "No pending plan found with ID '{}'. It may have already been applied or expired.",
             plan_id
         ))
-    })?;
+    };
+    let plan = get_plan(&plan_id).ok_or_else(not_found)?;
+
+    // Scope check BEFORE anything is returned, dry run included. The plan
+    // store is shared by every principal in the process, and tenants never
+    // share a customer_id (enforced by remote config validation), so this is
+    // what binds a plan to its tenant. An out-of-scope plan is reported as
+    // missing so the response cannot be used to probe for other tenants' ids.
+    if !config.customer_is_allowed(&plan.customer_id) {
+        return Err(not_found());
+    }
 
     // Dry run: return preview without executing.
     if dry_run {
@@ -100,15 +110,6 @@ pub async fn confirm_and_apply(
         return Err(McpGoogleAdsError::AccessDenied(format!(
             "role '{}' may draft and dry-run plans but only an admin may apply them",
             config.access.role.as_str()
-        )));
-    }
-
-    // Re-check scope at apply time. A short plan id is never an authorization
-    // capability and cannot be used to cross tenant/account boundaries.
-    if !config.customer_is_allowed(&plan.customer_id) {
-        return Err(McpGoogleAdsError::AccessDenied(format!(
-            "plan customer_id '{}' is outside tenant '{}' account scope",
-            plan.customer_id, config.access.tenant_id
         )));
     }
 
@@ -510,8 +511,40 @@ mod tests {
         )
         .await
         .expect_err("out-of-scope plan must not apply");
-        assert!(matches!(error, McpGoogleAdsError::AccessDenied(_)));
+        assert!(matches!(error, McpGoogleAdsError::PlanNotFound(_)));
         assert!(get_plan(&plan_id).is_some());
+        remove_plan(&plan_id);
+    }
+
+    #[tokio::test]
+    async fn out_of_scope_plan_is_not_disclosed_by_dry_run() {
+        let plan = ChangePlan::new(
+            "test_op".to_string(),
+            "campaign".to_string(),
+            "1".to_string(),
+            "9999999999".to_string(),
+            serde_json::json!({"secret": "other tenant's change"}),
+            false,
+            vec![serde_json::json!({"campaignOperation": {"update": {"resourceName": "x"}}})],
+        );
+        let plan_id = plan.plan_id.clone();
+        store_plan(plan);
+
+        let mut config = Config::default();
+        config.access.role = crate::config::AccessRole::Editor;
+        config.access.allowed_customer_ids = vec!["1234567890".to_string()];
+        let error = confirm_and_apply(
+            &config,
+            ConfirmApplyInput {
+                plan_id: plan_id.clone(),
+                dry_run: true,
+                ..Default::default()
+            },
+        )
+        .await
+        .expect_err("dry run must not reveal another tenant's plan");
+        assert!(matches!(error, McpGoogleAdsError::PlanNotFound(_)));
+        assert!(!error.to_string().contains("9999999999"));
         remove_plan(&plan_id);
     }
 }

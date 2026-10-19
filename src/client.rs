@@ -18,6 +18,24 @@ pub const DEFAULT_BASE_URL: &str = "https://googleads.googleapis.com/v25";
 /// they don't need credentials files.
 pub const BASE_URL_ENV: &str = "GOOGLE_ADS_API_BASE_URL";
 
+/// Opt-in that allows real credentials to be sent when [`BASE_URL_ENV`]
+/// points somewhere other than `https://googleads.googleapis.com`.
+pub const ALLOW_CUSTOM_BASE_URL_ENV: &str = "GOOGLE_ADS_ALLOW_CUSTOM_BASE_URL";
+
+/// True only for the real Google Ads host. The host must be followed by `/`
+/// or end the string, so look-alikes such as
+/// `https://googleads.googleapis.com.example` are not mistaken for Google.
+fn is_google_ads_base_url(url: &str) -> bool {
+    const HOST: &str = "https://googleads.googleapis.com";
+    url == HOST || url.starts_with("https://googleads.googleapis.com/")
+}
+
+fn allow_credentials_on_custom_base_url() -> bool {
+    std::env::var(ALLOW_CUSTOM_BASE_URL_ENV)
+        .map(|v| matches!(v.to_lowercase().as_str(), "true" | "1" | "yes"))
+        .unwrap_or(false)
+}
+
 /// Whitelist of top-level `MutateOperation` keys accepted by Google Ads v25.
 ///
 /// `mutate_operations` payloads with any key not in this list are rejected
@@ -280,8 +298,20 @@ impl GoogleAdsClient {
     /// (e.g. a `wiremock` server) and no credentials file exists, this falls
     /// back to a static dummy bearer token so tests don't need an OAuth2 flow.
     async fn build_headers(&self) -> Result<reqwest::header::HeaderMap> {
-        let token = if self.is_test_base_url() && !self.config.google.credentials_path.exists() {
-            "test-access-token".to_string()
+        let token = if self.is_test_base_url() {
+            if !self.config.google.credentials_path.exists() {
+                "test-access-token".to_string()
+            } else if allow_credentials_on_custom_base_url() {
+                auth::get_access_token(&self.config).await?
+            } else {
+                // Never hand a real OAuth token (and developer token) to a
+                // host that is not Google's unless the operator opted in.
+                return Err(McpGoogleAdsError::Config(format!(
+                    "refusing to send Google credentials to non-Google base URL '{}'; \
+                     set {}=true if this endpoint is trusted",
+                    self.base_url, ALLOW_CUSTOM_BASE_URL_ENV
+                )));
+            }
         } else {
             auth::get_access_token(&self.config).await?
         };
@@ -319,9 +349,7 @@ impl GoogleAdsClient {
     }
 
     fn is_test_base_url(&self) -> bool {
-        !self
-            .base_url
-            .starts_with("https://googleads.googleapis.com")
+        !is_google_ads_base_url(&self.base_url)
     }
 
     /// Execute a GAQL query via the Google Ads search endpoint.
@@ -664,6 +692,19 @@ fn parse_google_ads_error(status: reqwest::StatusCode, body: &str) -> McpGoogleA
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_google_ads_base_url_rejects_look_alike_hosts() {
+        assert!(is_google_ads_base_url(DEFAULT_BASE_URL));
+        assert!(is_google_ads_base_url("https://googleads.googleapis.com"));
+        assert!(!is_google_ads_base_url(
+            "https://googleads.googleapis.com.evil.example/v25"
+        ));
+        assert!(!is_google_ads_base_url(
+            "http://googleads.googleapis.com/v25"
+        ));
+        assert!(!is_google_ads_base_url("http://127.0.0.1:9999/v25"));
+    }
 
     #[test]
     fn test_normalize_customer_id() {
