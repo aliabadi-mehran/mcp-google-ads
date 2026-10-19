@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::sync::Mutex;
+use std::time::{Duration, Instant};
 
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
@@ -76,7 +77,9 @@ impl ChangePlan {
         mutate_operations: Vec<serde_json::Value>,
     ) -> Self {
         Self {
-            plan_id: Uuid::new_v4().to_string()[..8].to_string(),
+            // Full 122-bit UUID: plan ids are shared between people (an editor
+            // hands one to an admin), so they must not be guessable.
+            plan_id: Uuid::new_v4().to_string(),
             operation,
             entity_type,
             entity_id,
@@ -146,22 +149,64 @@ impl ChangePlan {
 }
 
 /// Thread-safe store for pending plans
-static PENDING_PLANS: std::sync::LazyLock<Mutex<HashMap<String, ChangePlan>>> =
+/// How long an unapplied plan stays retrievable.
+const PLAN_TTL: Duration = Duration::from_secs(24 * 60 * 60);
+
+/// Upper bound on pending plans per customer, so an abandoned or abusive
+/// caller cannot grow the store without limit. Eviction is confined to the
+/// same customer, and customers never span tenants, so one tenant cannot
+/// flush another tenant's plans.
+const MAX_PLANS_PER_CUSTOMER: usize = 500;
+
+struct StoredPlan {
+    plan: ChangePlan,
+    stored_at: Instant,
+}
+
+static PENDING_PLANS: std::sync::LazyLock<Mutex<HashMap<String, StoredPlan>>> =
     std::sync::LazyLock::new(|| Mutex::new(HashMap::new()));
 
+fn normalize_customer(id: &str) -> String {
+    id.replace('-', "")
+}
+
 pub fn store_plan(plan: ChangePlan) {
-    PENDING_PLANS
-        .lock()
-        .expect("plan store lock poisoned")
-        .insert(plan.plan_id.clone(), plan);
+    let mut plans = PENDING_PLANS.lock().expect("plan store lock poisoned");
+    plans.retain(|_, stored| stored.stored_at.elapsed() < PLAN_TTL);
+
+    let customer = normalize_customer(&plan.customer_id);
+    let mut same_customer: Vec<(Instant, String)> = plans
+        .iter()
+        .filter(|(_, stored)| normalize_customer(&stored.plan.customer_id) == customer)
+        .map(|(id, stored)| (stored.stored_at, id.clone()))
+        .collect();
+    if same_customer.len() >= MAX_PLANS_PER_CUSTOMER {
+        same_customer.sort();
+        let excess = same_customer.len() + 1 - MAX_PLANS_PER_CUSTOMER;
+        for (_, id) in same_customer.into_iter().take(excess) {
+            plans.remove(&id);
+        }
+    }
+
+    plans.insert(
+        plan.plan_id.clone(),
+        StoredPlan {
+            plan,
+            stored_at: Instant::now(),
+        },
+    );
 }
 
 pub fn get_plan(plan_id: &str) -> Option<ChangePlan> {
-    PENDING_PLANS
-        .lock()
-        .expect("plan store lock poisoned")
-        .get(plan_id)
-        .cloned()
+    let mut plans = PENDING_PLANS.lock().expect("plan store lock poisoned");
+    match plans.get(plan_id) {
+        Some(stored) if stored.stored_at.elapsed() < PLAN_TTL => Some(stored.plan.clone()),
+        Some(_) => {
+            plans.remove(plan_id);
+            None
+        }
+        None => None,
+    }
 }
 
 pub fn remove_plan(plan_id: &str) {
@@ -226,6 +271,47 @@ mod tests {
 
         remove_plan(&plan_id);
         assert!(get_plan(&plan_id).is_none());
+    }
+
+    #[test]
+    fn test_plan_id_is_a_full_uuid() {
+        let plan = make_plan();
+        assert!(Uuid::parse_str(&plan.plan_id).is_ok());
+    }
+
+    fn plan_for(customer_id: &str) -> ChangePlan {
+        ChangePlan::new(
+            "test_operation".to_string(),
+            "campaign".to_string(),
+            "entity-123".to_string(),
+            customer_id.to_string(),
+            serde_json::json!({}),
+            false,
+            Vec::new(),
+        )
+    }
+
+    #[test]
+    fn test_per_customer_cap_evicts_only_that_customers_oldest() {
+        let other = plan_for("777-000-0002");
+        let other_id = other.plan_id.clone();
+        store_plan(other);
+
+        let mut ids = Vec::new();
+        for _ in 0..=MAX_PLANS_PER_CUSTOMER {
+            let plan = plan_for("777-000-0001");
+            ids.push(plan.plan_id.clone());
+            store_plan(plan);
+        }
+
+        assert!(get_plan(&ids[0]).is_none(), "oldest plan is evicted");
+        assert!(get_plan(&ids[MAX_PLANS_PER_CUSTOMER]).is_some());
+        assert!(get_plan(&other_id).is_some(), "other customers are untouched");
+
+        for id in ids {
+            remove_plan(&id);
+        }
+        remove_plan(&other_id);
     }
 
     #[test]
